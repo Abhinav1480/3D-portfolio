@@ -1,0 +1,425 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&display=swap');
+
+.room-loader {
+  --rl-bg-top: #1B1930;
+  --rl-bg-mid: #241F3A;
+  --rl-bg-bottom: #2E2540;
+  --rl-night-core: #2A2F5B;
+  --rl-night-deep: #141833;
+  --rl-gold: #f2b441;
+  --rl-cream: #fbeed6;
+  --rl-floor: #c9843f;
+  --rl-wall-left: #d8c19a;
+  --rl-wall-right: #e9d8b6;
+  --rl-sofa-main: #4a5aa0;
+  --rl-sofa-deep: #3b4a8a;
+  --rl-desk-top: #e2a24e;
+  --rl-plant-light: #73af52;
+  --rl-plant-dark: #4f8736;
+  --rl-pot: #e8833a;
+
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow: hidden;
+  user-select: none;
+  font-family: "Bricolage Grotesque", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  color: var(--rl-cream);
+  /* Exact match to the 3D scene background gradient at edges with a soft radial night-sky core */
+  background:
+    radial-gradient(circle at 50% 42%, rgba(42, 47, 91, 0.58) 0%, rgba(27, 25, 48, 0) 64%),
+    linear-gradient(180deg, var(--rl-bg-top) 0%, var(--rl-bg-mid) 52%, var(--rl-bg-bottom) 100%);
+  transition: opacity 1.05s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.room-loader--exit {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.room-loader__stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.room-loader__star {
+  position: absolute;
+  border-radius: 999px;
+  background-color: var(--rl-cream);
+  box-shadow: 0 0 6px rgba(251, 238, 214, 0.65);
+  opacity: 0.25;
+  animation: rl-twinkle var(--star-dur, 3.2s) ease-in-out infinite;
+  animation-delay: var(--star-delay, 0s);
+}
+
+@keyframes rl-twinkle {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 0.88;
+    transform: scale(1.2);
+  }
+}
+
+.room-loader__card {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  transform: scale(1);
+  transform-origin: 50% 44%;
+  transition:
+    transform 1.1s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.85s ease;
+}
+
+.room-loader--lit .room-loader__card {
+  filter: brightness(1.08);
+}
+
+.room-loader--exit .room-loader__card {
+  transform: scale(1.4);
+  opacity: 0;
+}
+
+.room-loader__stage {
+  position: relative;
+  width: min(86vw, 360px);
+  aspect-ratio: 1 / 0.88;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.room-loader__bloom {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(242, 180, 65, 0.46) 0%,
+    rgba(251, 238, 214, 0.22) 38%,
+    rgba(242, 180, 65, 0) 72%
+  );
+  opacity: 0;
+  transform: scale(0.72);
+  pointer-events: none;
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.room-loader--lit .room-loader__bloom,
+.room-loader--exit .room-loader__bloom {
+  opacity: 1;
+  transform: scale(1.18);
+}
+
+.room-loader__svg {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 18px 34px rgba(10, 8, 22, 0.55));
+}
+
+/* Isometric piece reveal: 1) gold outline draws in, 2) colour fills fade in */
+.rl-piece {
+  pointer-events: none;
+}
+
+.rl-piece__fills {
+  opacity: 0;
+  transform: translateY(3px);
+  transition:
+    opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.22s,
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.22s;
+}
+
+.rl-piece--visible .rl-piece__fills {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.rl-piece__outline {
+  fill: none;
+  stroke: var(--rl-gold);
+  stroke-width: 1.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.52s cubic-bezier(0.33, 1, 0.68, 1),
+    opacity 0.18s ease;
+}
+
+.rl-piece--outline .rl-piece__outline,
+.rl-piece--visible .rl-piece__outline {
+  stroke-dashoffset: 0;
+  opacity: 0.92;
+}
+
+.room-loader--lit .rl-piece--visible .rl-piece__outline {
+  opacity: 0.55;
+}
+
+/* Box face shading using color-mix (top lighter, right darker) with hex fallbacks */
+.rl-face-floor-top {
+  fill: #d09354;
+  fill: color-mix(in srgb, var(--rl-floor) 86%, var(--rl-cream) 14%);
+}
+.rl-face-floor-left {
+  fill: #b57739;
+  fill: color-mix(in srgb, var(--rl-floor) 90%, #000000 10%);
+}
+.rl-face-floor-right {
+  fill: #915f2d;
+  fill: color-mix(in srgb, var(--rl-floor) 72%, #000000 28%);
+}
+
+.rl-face-lwall-top {
+  fill: #e0cda9;
+  fill: color-mix(in srgb, var(--rl-wall-left) 84%, #ffffff 16%);
+}
+.rl-face-lwall-left {
+  fill: #b19e7e;
+  fill: color-mix(in srgb, var(--rl-wall-left) 82%, #000000 18%);
+}
+.rl-face-lwall-right {
+  fill: var(--rl-wall-left);
+}
+
+.rl-face-rwall-top {
+  fill: #ede0c3;
+  fill: color-mix(in srgb, var(--rl-wall-right) 86%, #ffffff 14%);
+}
+.rl-face-rwall-left {
+  fill: var(--rl-wall-right);
+}
+.rl-face-rwall-right {
+  fill: #b1a48a;
+  fill: color-mix(in srgb, var(--rl-wall-right) 76%, #000000 24%);
+}
+
+.rl-face-sofa-top {
+  fill: #6a75aa;
+  fill: color-mix(in srgb, var(--rl-sofa-main) 82%, var(--rl-cream) 18%);
+}
+.rl-face-sofa-left {
+  fill: var(--rl-sofa-main);
+}
+.rl-face-sofa-right {
+  fill: #2f3b6e;
+  fill: color-mix(in srgb, var(--rl-sofa-deep) 80%, #000000 20%);
+}
+
+.rl-face-cushion-top {
+  fill: #f4be5b;
+  fill: color-mix(in srgb, var(--rl-gold) 86%, #ffffff 14%);
+}
+.rl-face-cushion-left {
+  fill: var(--rl-gold);
+}
+.rl-face-cushion-right {
+  fill: #b88931;
+  fill: color-mix(in srgb, var(--rl-gold) 76%, #000000 24%);
+}
+
+.rl-face-desk-top {
+  fill: #e6ad63;
+  fill: color-mix(in srgb, var(--rl-desk-top) 85%, var(--rl-cream) 15%);
+}
+.rl-face-desk-left {
+  fill: var(--rl-desk-top);
+}
+.rl-face-desk-right {
+  fill: #a7783a;
+  fill: color-mix(in srgb, var(--rl-desk-top) 74%, #000000 26%);
+}
+
+.rl-face-pot-top {
+  fill: #eb9453;
+  fill: color-mix(in srgb, var(--rl-pot) 84%, var(--rl-cream) 16%);
+}
+.rl-face-pot-left {
+  fill: var(--rl-pot);
+}
+.rl-face-pot-right {
+  fill: #ac612b;
+  fill: color-mix(in srgb, var(--rl-pot) 74%, #000000 26%);
+}
+
+.rl-face-leaf-top {
+  fill: #89b967;
+  fill: color-mix(in srgb, var(--rl-plant-light) 84%, var(--rl-cream) 16%);
+}
+.rl-face-leaf-left {
+  fill: var(--rl-plant-light);
+}
+.rl-face-leaf-right {
+  fill: #416f2c;
+  fill: color-mix(in srgb, var(--rl-plant-dark) 82%, #000000 18%);
+}
+
+/* Monitor screen boot flicker */
+.rl-monitor-screen {
+  fill: #1b1930;
+  opacity: 0;
+}
+
+.rl-piece--visible .rl-monitor-screen {
+  fill: var(--rl-gold);
+  animation: rl-monitor-boot 0.65s steps(2, end) 0.28s forwards;
+}
+
+.room-loader--lit .rl-monitor-screen,
+.room-loader--exit .rl-monitor-screen {
+  fill: var(--rl-cream);
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(242, 180, 65, 0.9));
+}
+
+@keyframes rl-monitor-boot {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 0.95;
+  }
+  42% {
+    opacity: 0.18;
+  }
+  66% {
+    opacity: 0.98;
+  }
+  82% {
+    opacity: 0.52;
+  }
+  100% {
+    opacity: 0.94;
+  }
+}
+
+/* Typography & status below the room */
+.room-loader__meta {
+  width: 100%;
+  max-width: 332px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.room-loader__name {
+  margin: 0;
+  font-size: clamp(1.85rem, 4.5vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--rl-cream);
+}
+
+.room-loader__role {
+  margin: 6px 0 0;
+  font-size: clamp(0.95rem, 2.4vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--rl-cream) 68%, transparent);
+}
+
+.room-loader__status-row {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(251, 238, 214, 0.12);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+
+.room-loader__status-label {
+  color: color-mix(in srgb, var(--rl-cream) 86%, transparent);
+  font-weight: 500;
+  text-align: left;
+}
+
+.room-loader__status-pct {
+  color: var(--rl-gold);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.room-loader__slow-note {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--rl-cream) 58%, transparent);
+  animation: rl-fade-in 0.4s ease forwards;
+}
+
+@keyframes rl-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduced motion: no outline drawing, no star twinkle, no zoom — simple fades */
+@media (prefers-reduced-motion: reduce) {
+  .room-loader {
+    transition: opacity 0.35s ease;
+  }
+
+  .room-loader__star {
+    animation: none;
+    opacity: 0.45;
+  }
+
+  .room-loader__card,
+  .room-loader--exit .room-loader__card {
+    transform: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .room-loader__bloom {
+    transition: opacity 0.3s ease;
+    transform: scale(1);
+  }
+
+  .rl-piece__outline {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .rl-piece__fills {
+    transform: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .rl-piece--visible .rl-monitor-screen {
+    animation: none;
+    opacity: 0.92;
+  }
+}

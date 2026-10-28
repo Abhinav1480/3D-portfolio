@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    background: linear-gradient(
+      180deg,
+      var(--bg-top) 0%,
+      var(--bg-mid) 52%,
+      var(--bg-bottom) 100%
+    );
+    background-attachment: fixed;
+    color: var(--ui-text);
+    overflow-x: hidden;
+  }
+
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    image-rendering: auto;
+    filter: none !important;
+    backdrop-filter: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
