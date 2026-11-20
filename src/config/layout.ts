@@ -165,7 +165,7 @@ export const TOUR_CAMERA_STOPS: readonly TourCameraStopConfig[] = [
     stopIndex: 2,
     label: 'Projects',
     locationName: 'Projects (Monitor 2)',
-    subtitle: 'ExamOS, ORCA, Clinic Desk & StockPilot',
+    subtitle: 'ExamOS, ORCA, Clinic Desk & STADIUMX',
     position: [-1.06, 1.14, -1.995],
     target: [-1.06, 1.06, -2.65],
     fov: 45,

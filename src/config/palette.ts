@@ -196,8 +196,8 @@ export const PALETTE = {
   projGradSIHEnd: '#4F8736',
   projGradClinicStart: '#F2A33A',
   projGradClinicEnd: '#C97B2E',
-  projGradStockPilotStart: '#F06A8D',
-  projGradStockPilotEnd: '#C44569',
+  projGradStadiumXStart: '#F06A8D',
+  projGradStadiumXEnd: '#C44569',
 
   // 2.11 DOM Overlay & Chrome Tokens
   uiFrostedCream: 'rgba(255, 246, 224, 0.88)',

@@ -2,14 +2,14 @@
 // Contains zero internal notes or build status text. Missing fields are omitted silently.
 
 export interface ProjectData {
-  id: 'examos' | 'sih' | 'clinic-desk' | 'stock-pilot';
+  id: 'examos' | 'sih' | 'clinic-desk' | 'stadiumx';
   pageIndex: number; // P2..P5 on Projects screen
   shortTitle: string;
   fullTitle: string;
   role?: string;
   oneLineSummary?: string;
   chips: string[];
-  gradientKey: 'examos' | 'sih' | 'clinic' | 'stockpilot';
+  gradientKey: 'examos' | 'sih' | 'clinic' | 'stadiumx';
   problem?: string;
   features?: string[];
   stack?: string[];
@@ -165,24 +165,24 @@ export const PORTFOLIO_CONTENT = {
       // TODO: Add liveUrl for Clinic Desk if a public live demo deployment URL becomes available
     },
     {
-      id: 'stock-pilot',
+      id: 'stadiumx',
       pageIndex: 4,
-      shortTitle: 'StockPilot',
-      fullTitle: 'StockPilot',
+      shortTitle: 'STADIUMX',
+      fullTitle: 'STADIUMX — 3D Cricket Stadium & Seat Booking',
       oneLineSummary:
-        'AI-powered inventory and warehouse management platform for managing products, stock, warehouses, suppliers, and operations.',
-      chips: ['Next.js', 'TypeScript'],
-      gradientKey: 'stockpilot',
+        'An immersive 3D cricket stadium and seat-booking platform featuring interactive stadium exploration, smart seat discovery, seat availability, sightline previews, and digital tickets.',
+      chips: ['Three.js', 'React 19'],
+      gradientKey: 'stadiumx',
       problem:
-        'An AI-powered inventory and warehouse management platform built to streamline stock operations through intelligent product extraction, organizational access controls, and inventory analytics.',
+        'An immersive 3D cricket stadium experience that lets visitors explore the venue, discover seats, preview their viewing angles, and interact with a seat-booking interface.',
       features: [
-        'AI-Powered Product Extraction: Supports extracting product information from vendor receipts, invoices, or barcodes, with a review interface for checking and editing extracted details.',
-        'Inventory & Warehouse Management: Organizes inventory across warehouse locations, supports purchase and sales workflows, and highlights low-stock items.',
-        'Analytics & Access Control: Includes inventory analytics, activity timelines, organizational separation, and role-based permissions.',
+        'Immersive 3D Stadium: Explore a detailed cricket stadium through interactive 3D navigation and camera controls.',
+        'Interactive Seat Discovery: Select seating areas, inspect individual seats, and preview the view from the selected position.',
+        'Seat Booking Experience: Explore seat availability, booking information, and digital ticket functionality.',
       ],
-      stack: ['Next.js', 'TypeScript', 'Prisma', 'PostgreSQL', 'Tailwind CSS', 'Google Gemini AI'],
-      repoUrl: 'https://github.com/Abhinav1480/stock-pilot',
-      liveUrl: 'https://stock-pilot-8a2z.vercel.app/',
+      stack: ['Three.js', 'React 19', 'TypeScript', 'Tailwind CSS', 'Vite', 'Socket.IO'],
+      repoUrl: 'https://github.com/Abhinav1480/3D-stadium-booking',
+      liveUrl: 'https://3d-stadium-booking.vercel.app/',
     },
   ] satisfies ProjectData[],
 
@@ -196,26 +196,12 @@ export const PORTFOLIO_CONTENT = {
         proofUrl: 'https://github.com/Abhinav1480/InAmigos',
       },
       {
-        title: 'AWS Student Community — VJIT',
-        organization: 'VJIT, Hyderabad · Community & Event Web Development',
+        title: 'AWS VJIT Members — 2026',
+        organization: 'AWS Cloud Club · VJIT, Hyderabad',
         category: 'community',
         summary:
-          'Involved in student community initiatives and website development and event preparation for AWS Student Community Day.',
+          'Involved in student community initiatives and website development for the student community.',
         proofUrl: 'https://github.com/Abhinav1480/awssbg-vjit-website',
-      },
-      {
-        title: 'Student Builder Group — Member',
-        organization: 'AWS Student Builder Group · VJIT, Hyderabad',
-        category: 'community',
-        summary:
-          'Collaborated with student builders on cloud fundamentals, community projects, and the official group website.',
-      },
-      {
-        title: 'Student Community Involvement',
-        organization: 'Google Ambassador / Campus Tech Communities',
-        category: 'community',
-        summary:
-          'Active participant in student developer initiatives, peer workshops, and cloud/web technology events.',
       },
     ] satisfies ExperienceItem[],
     page2: [

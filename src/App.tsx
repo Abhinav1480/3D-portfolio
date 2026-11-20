@@ -1248,6 +1248,11 @@ export function App() {
 
   // ONE smoother (Lenis) synced to GSAP ScrollTrigger
   useEffect(() => {
+    // Ensure scroll position is reset to top on reload before ScrollTrigger initializes
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
+
     const lenis = new Lenis({
       lerp: 0.08,
       wheelMultiplier: 0.9,
@@ -1256,6 +1261,9 @@ export function App() {
     });
     lenisRef.current = lenis;
 
+    // Immediately reset Lenis to top on mount
+    lenis.scrollTo(0, { immediate: true });
+
     lenis.on('scroll', ScrollTrigger.update);
 
     const tickerFn = (timeSec: number) => {
@@ -1263,6 +1271,10 @@ export function App() {
     };
     gsap.ticker.add(tickerFn);
     gsap.ticker.lagSmoothing(0);
+
+    // Refresh ScrollTrigger from clean top state
+    ScrollTrigger.clearScrollMemory?.();
+    ScrollTrigger.refresh();
 
     const st = ScrollTrigger.create({
       trigger: scrollContainerRef.current || document.body,
@@ -1281,6 +1293,9 @@ export function App() {
         }
       },
     });
+
+    // Make sure initial state evaluates from progress 0
+    scrollProgressRef.current = 0;
 
     const onFirstWheel = () => {
       setHasScrolled(true);

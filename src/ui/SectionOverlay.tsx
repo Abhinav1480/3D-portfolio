@@ -22,7 +22,7 @@ const SECTION_META: Record<
   2: {
     indexLabel: '02 / 05',
     title: 'Projects',
-    tagline: 'ExamOS, ORCA, Clinic Desk & StockPilot',
+    tagline: 'ExamOS, ORCA, Clinic Desk & STADIUMX',
     accent: PALETTE.accentProjects,
   },
   3: {
