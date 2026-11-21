@@ -64,7 +64,7 @@ export interface CameraRigApi {
   syncOrbitTargetToCurrent: (customPose?: SavedCameraPose) => void;
   resetExploreView: (durationSec?: number) => void;
   resetExploreOffsetsImmediate: () => void;
-  zoomExploreByFactor: (factorDelta: number) => void;
+  zoomExploreByFactor: (factorDelta: number, durationSec?: number) => void;
   orbitExploreByAngles: (deltaAzimuthRad: number, deltaPolarRad: number) => void;
   simulateExploreCursorZoom: (clientX: number, clientY: number, stepFraction: number) => void;
   simulateExploreDoubleClick: (
@@ -94,13 +94,13 @@ const LUT_SAMPLES = 2000;
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
 
-export const EXPLORE_MIN_DISTANCE = 0.9;
+export const EXPLORE_MIN_DISTANCE = 0.85;
 export const EXPLORE_MAX_DISTANCE = 14.0;
 export const EXPLORE_CLOSE_DISTANCE_THRESHOLD = 3.0;
 export const EXPLORE_DOUBLE_CLICK_DISTANCE = 1.6;
-export const EXPLORE_MAX_ZOOM_STEP_FRACTION = 0.08;
+export const EXPLORE_MAX_ZOOM_STEP_FRACTION = 0.25;
 export const EXPLORE_DAMPING_FACTOR = 0.08;
-export const EXPLORE_ZOOM_SPEED = 0.8;
+export const EXPLORE_ZOOM_SPEED = 1.25;
 export const EXPLORE_PAN_SPEED = 0.8;
 
 // Module-scope reusable math objects — zero allocations in wheel/pinch/update paths
@@ -160,15 +160,18 @@ function normalizeWheelZoomStep(event: WheelEvent): number {
 
   let stepMag: number;
   if (event.ctrlKey || event.metaKey) {
-    stepMag = Math.min(0.045, absDelta * 0.004 * EXPLORE_ZOOM_SPEED);
+    // Smooth pinch-to-zoom on trackpad
+    stepMag = Math.min(0.12, absDelta * 0.008 * EXPLORE_ZOOM_SPEED);
   } else if (event.deltaMode === 1 || absDelta >= 40) {
+    // Discrete mouse wheel notch (typically absDelta 100 or 120, or deltaMode lines)
     const normalizedNotch =
       event.deltaMode === 1 ? Math.min(2, absDelta / 3) : Math.min(2, absDelta / 100);
-    stepMag = Math.max(0.045, normalizedNotch * 0.075 * EXPLORE_ZOOM_SPEED);
+    stepMag = Math.max(0.12, normalizedNotch * 0.16 * EXPLORE_ZOOM_SPEED);
   } else if (event.deltaMode === 2) {
     stepMag = EXPLORE_MAX_ZOOM_STEP_FRACTION;
   } else {
-    stepMag = absDelta * 0.0018 * EXPLORE_ZOOM_SPEED;
+    // Continuous two-finger scroll on trackpad
+    stepMag = Math.min(0.14, absDelta * 0.004 * EXPLORE_ZOOM_SPEED);
   }
 
   return THREE.MathUtils.clamp(
@@ -386,13 +389,11 @@ export const CameraRig: React.FC<CameraRigProps> = ({
       _forward.set(0, 0, -1);
     }
 
-    const hitFound = raycastExploreHitPoint(_exploreRay, null, _hitPoint, false);
-    const hitDist = hitFound ? camera.position.distanceTo(_hitPoint) : curTargetDist;
-
-    let deltaC = 0;
-    let newTargetDist = curTargetDist;
-
     if (stepFraction > 0) {
+      // Zoom IN towards cursor / hit point
+      const hitFound = raycastExploreHitPoint(_exploreRay, null, _hitPoint, false);
+      const hitDist = hitFound ? camera.position.distanceTo(_hitPoint) : curTargetDist;
+
       if (hitDist <= EXPLORE_MIN_DISTANCE && curTargetDist <= EXPLORE_MIN_DISTANCE) {
         return;
       }
@@ -402,34 +403,41 @@ export const CameraRig: React.FC<CameraRigProps> = ({
         EXPLORE_MIN_DISTANCE,
         EXPLORE_MAX_DISTANCE
       );
-      deltaC = effectiveSurfaceDist - nextHitDist;
+      const deltaC = effectiveSurfaceDist - nextHitDist;
 
       const denom = Math.max(1e-5, effectiveSurfaceDist - EXPLORE_MIN_DISTANCE);
       const remRatio = (nextHitDist - EXPLORE_MIN_DISTANCE) / denom;
       const blendedTargetDist =
         nextHitDist +
-        remRatio * (1 - Math.min(1, stepFraction * 2.5)) * (curTargetDist - effectiveSurfaceDist);
+        remRatio * (1 - Math.min(1, stepFraction * 2.0)) * (curTargetDist - effectiveSurfaceDist);
 
-      newTargetDist = THREE.MathUtils.clamp(
+      const newTargetDist = THREE.MathUtils.clamp(
         blendedTargetDist,
         EXPLORE_MIN_DISTANCE,
         EXPLORE_MAX_DISTANCE
       );
+
+      _candCamPos.copy(camera.position).addScaledVector(_dollyDir, deltaC);
+      _candTarget.copy(_candCamPos).addScaledVector(_forward, newTargetDist);
     } else {
+      // Zoom OUT: pull straight back along camera viewing axis away from focus point
+      // to preserve viewing direction and avoid unexpected sideways rotation/drift
       const outFraction = -stepFraction;
-      if (curTargetDist >= EXPLORE_MAX_DISTANCE) {
+      _viewOffset.subVectors(camera.position, controls.target);
+      const curDist = _viewOffset.length();
+      if (curDist >= EXPLORE_MAX_DISTANCE) {
         return;
       }
-      newTargetDist = THREE.MathUtils.clamp(
-        curTargetDist * (1 + outFraction),
+      const newTargetDist = THREE.MathUtils.clamp(
+        curDist * (1 + outFraction * 1.25),
         EXPLORE_MIN_DISTANCE,
         EXPLORE_MAX_DISTANCE
       );
-      deltaC = curTargetDist - newTargetDist;
+      _candCamPos
+        .copy(controls.target)
+        .addScaledVector(_viewOffset, newTargetDist / Math.max(1e-5, curDist));
+      _candTarget.copy(controls.target);
     }
-
-    _candCamPos.copy(camera.position).addScaledVector(_dollyDir, deltaC);
-    _candTarget.copy(_candCamPos).addScaledVector(_forward, newTargetDist);
 
     clampExploreTargetAndShiftCamera(_candTarget, _candCamPos);
     resolveCameraCollision(_candCamPos, CAMERA_SPHERE_RADIUS);
@@ -447,11 +455,47 @@ export const CameraRig: React.FC<CameraRigProps> = ({
         .addScaledVector(_viewOffset, EXPLORE_MAX_DISTANCE / finalDist);
     }
 
-    camera.position.copy(_candCamPos);
-    controls.target.copy(_candTarget);
-    updateOrbitAngleLimits(controls, camera.position.distanceTo(controls.target), debugFreeCam);
-    controls.update();
-    enforceExploreConstraints(controls);
+    const startPos = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const goalPos = _candCamPos.clone();
+    const goalTarget = _candTarget.clone();
+
+    if (reducedMotion) {
+      camera.position.copy(goalPos);
+      controls.target.copy(goalTarget);
+      updateOrbitAngleLimits(controls, camera.position.distanceTo(controls.target), debugFreeCam);
+      controls.update();
+      enforceExploreConstraints(controls);
+      _curPos.copy(camera.position);
+      _curTarget.copy(controls.target);
+      return;
+    }
+
+    const proxy = { t: 0 };
+    isExploreTweeningRef.current = true;
+    exploreTweenRef.current = gsap.to(proxy, {
+      t: 1,
+      duration: 0.28,
+      ease: 'power2.out',
+      onUpdate: () => {
+        camera.position.lerpVectors(startPos, goalPos, proxy.t);
+        controls.target.lerpVectors(startTarget, goalTarget, proxy.t);
+        resolveCameraCollision(camera.position, CAMERA_SPHERE_RADIUS);
+        updateOrbitAngleLimits(
+          controls,
+          camera.position.distanceTo(controls.target),
+          debugFreeCam
+        );
+        controls.update();
+        _curPos.copy(camera.position);
+        _curTarget.copy(controls.target);
+      },
+      onComplete: () => {
+        isExploreTweeningRef.current = false;
+        exploreTweenRef.current = null;
+        enforceExploreConstraints(controls);
+      },
+    });
   };
 
   const handleExploreDoubleClick = (
@@ -977,7 +1021,7 @@ export const CameraRig: React.FC<CameraRigProps> = ({
           );
         }
       },
-      zoomExploreByFactor: (factorDelta: number) => {
+      zoomExploreByFactor: (factorDelta: number, durationSec = 0.55) => {
         const controls = orbitRef.current;
         if (!controls || modeRef.current !== 'EXPLORE' || viewerOpenRef.current) return;
         killExploreTween();
@@ -988,17 +1032,83 @@ export const CameraRig: React.FC<CameraRigProps> = ({
         const curDist = _viewOffset.length();
         if (curDist < 1e-5) return;
 
+        // Requirement 2 & 3:
+        // When zooming in (factorDelta > 0): target 65-75% of current camera-to-target distance (default 70%)
+        // When zooming out (factorDelta < 0): target 1.3-1.4x of current camera-to-target distance (default 1.35x)
+        let targetRatio: number;
+        if (factorDelta > 0) {
+          targetRatio = factorDelta >= 0.15 ? 1 - factorDelta : 0.7;
+        } else {
+          targetRatio = factorDelta <= -0.15 ? 1 - factorDelta : 1.35;
+        }
+
         const nextDist = THREE.MathUtils.clamp(
-          curDist * (1 - factorDelta),
+          curDist * targetRatio,
           EXPLORE_MIN_DISTANCE,
           EXPLORE_MAX_DISTANCE
         );
-        camera.position.copy(controls.target).addScaledVector(_viewOffset, nextDist / curDist);
-        clampExploreTargetAndShiftCamera(controls.target, camera.position);
-        resolveCameraCollision(camera.position, CAMERA_SPHERE_RADIUS);
-        updateOrbitAngleLimits(controls, camera.position.distanceTo(controls.target), debugFreeCam);
-        controls.update();
-        enforceExploreConstraints(controls);
+
+        _tweenStartPos.copy(camera.position);
+        _tweenStartTarget.copy(controls.target);
+
+        _tweenGoalTarget.copy(controls.target);
+        _tweenGoalPos.copy(controls.target).addScaledVector(_viewOffset, nextDist / curDist);
+
+        clampExploreTargetAndShiftCamera(_tweenGoalTarget, _tweenGoalPos);
+        resolveCameraCollision(_tweenGoalPos, CAMERA_SPHERE_RADIUS);
+
+        _viewOffset.subVectors(_tweenGoalPos, _tweenGoalTarget);
+        const finalDist = _viewOffset.length();
+        if (finalDist < EXPLORE_MIN_DISTANCE && finalDist > 1e-5) {
+          _tweenGoalPos
+            .copy(_tweenGoalTarget)
+            .addScaledVector(_viewOffset, EXPLORE_MIN_DISTANCE / finalDist);
+          resolveCameraCollision(_tweenGoalPos, CAMERA_SPHERE_RADIUS);
+        } else if (finalDist > EXPLORE_MAX_DISTANCE) {
+          _tweenGoalPos
+            .copy(_tweenGoalTarget)
+            .addScaledVector(_viewOffset, EXPLORE_MAX_DISTANCE / finalDist);
+        }
+
+        const goalPos = _tweenGoalPos.clone();
+        const goalTarget = _tweenGoalTarget.clone();
+
+        if (durationSec <= 0 || reducedMotion) {
+          controls.target.copy(goalTarget);
+          camera.position.copy(goalPos);
+          updateOrbitAngleLimits(controls, camera.position.distanceTo(controls.target), debugFreeCam);
+          controls.update();
+          enforceExploreConstraints(controls);
+          _curPos.copy(camera.position);
+          _curTarget.copy(controls.target);
+          return;
+        }
+
+        const proxy = { t: 0 };
+        isExploreTweeningRef.current = true;
+        exploreTweenRef.current = gsap.to(proxy, {
+          t: 1,
+          duration: durationSec,
+          ease: 'power2.out',
+          onUpdate: () => {
+            camera.position.lerpVectors(_tweenStartPos, goalPos, proxy.t);
+            controls.target.lerpVectors(_tweenStartTarget, goalTarget, proxy.t);
+            resolveCameraCollision(camera.position, CAMERA_SPHERE_RADIUS);
+            updateOrbitAngleLimits(
+              controls,
+              camera.position.distanceTo(controls.target),
+              debugFreeCam
+            );
+            controls.update();
+            _curPos.copy(camera.position);
+            _curTarget.copy(controls.target);
+          },
+          onComplete: () => {
+            isExploreTweeningRef.current = false;
+            exploreTweenRef.current = null;
+            enforceExploreConstraints(controls);
+          },
+        });
       },
       orbitExploreByAngles: (deltaAzimuthRad: number, deltaPolarRad: number) => {
         const controls = orbitRef.current;

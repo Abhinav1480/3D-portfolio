@@ -32,6 +32,8 @@ export interface HUDProps {
   onDismissShelfHintChip: () => void;
   onDismissExploreHintChip: () => void;
   onResetExploreView: () => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
   onToggleMinimize: () => void;
   onToggleSoundMuted: () => void;
   onPlayGuitarFromUI: () => void;
@@ -88,6 +90,8 @@ export const HUD: React.FC<HUDProps> = ({
   onDismissShelfHintChip,
   onDismissExploreHintChip,
   onResetExploreView,
+  onZoomIn,
+  onZoomOut,
   onToggleMinimize,
   onToggleSoundMuted,
   onPlayGuitarFromUI,
@@ -646,20 +650,57 @@ export const HUD: React.FC<HUDProps> = ({
                 )}
 
                 {mode === 'EXPLORE' && (
-                  <button
-                    type="button"
-                    data-testid="hud-reset-view-button"
-                    onClick={onResetExploreView}
-                    className="cursor-pointer rounded-xl px-3 py-1.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-transform duration-150 hover:scale-[1.02] focus-visible:outline-2"
-                    style={{
-                      backgroundColor: PALETTE.screenCardBg,
-                      color: PALETTE.uiText,
-                      border: `1.5px solid ${PALETTE.accentSkills}`,
-                      outlineColor: PALETTE.accentSkills,
-                    }}
-                  >
-                    Reset View
-                  </button>
+                  <div className="flex items-center gap-1.5" role="group" aria-label="Explore Zoom and Reset Controls">
+                    {onZoomIn && (
+                      <button
+                        type="button"
+                        data-testid="hud-zoom-in-button"
+                        onClick={onZoomIn}
+                        aria-label="Zoom in closer to view (+)"
+                        className="cursor-pointer rounded-xl px-3 py-1.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-transform duration-150 hover:scale-[1.02] focus-visible:outline-2"
+                        style={{
+                          backgroundColor: PALETTE.screenCardBg,
+                          color: PALETTE.uiText,
+                          border: `1.5px solid ${PALETTE.accentSkills}`,
+                          outlineColor: PALETTE.accentSkills,
+                        }}
+                      >
+                        Zoom In (+)
+                      </button>
+                    )}
+                    {onZoomOut && (
+                      <button
+                        type="button"
+                        data-testid="hud-zoom-out-button"
+                        onClick={onZoomOut}
+                        aria-label="Zoom out farther from view (-)"
+                        className="cursor-pointer rounded-xl px-3 py-1.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-transform duration-150 hover:scale-[1.02] focus-visible:outline-2"
+                        style={{
+                          backgroundColor: PALETTE.screenCardBg,
+                          color: PALETTE.uiText,
+                          border: `1.5px solid ${PALETTE.accentSkills}`,
+                          outlineColor: PALETTE.accentSkills,
+                        }}
+                      >
+                        Zoom Out (−)
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      data-testid="hud-reset-view-button"
+                      onClick={onResetExploreView}
+                      aria-label="Reset camera to overview position (0)"
+                      className="cursor-pointer rounded-xl px-3 py-1.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-transform duration-150 hover:scale-[1.02] focus-visible:outline-2"
+                      style={{
+                        backgroundColor: PALETTE.screenCardBg,
+                        color: PALETTE.uiText,
+                        border: `1.5px solid ${PALETTE.accentSkills}`,
+                        outlineColor: PALETTE.accentSkills,
+                      }}
+                    >
+                      Reset View (0)
+                    </button>
+                  </div>
                 )}
 
                 {/* Technical Skills (Monitor 1) quick-focus button */}

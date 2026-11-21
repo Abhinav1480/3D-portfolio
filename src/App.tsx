@@ -1675,6 +1675,22 @@ export function App() {
     rigApiRef.current?.resetExploreView(1.0);
   }, []);
 
+  const handleZoomIn = useCallback(() => {
+    if (modeRef.current !== 'EXPLORE') {
+      handleSkipToExplore();
+    }
+    // Zoom in: brings camera to ~70% of current distance (65-75% spec) with smooth 550ms transition
+    rigApiRef.current?.zoomExploreByFactor(0.30, 0.55);
+  }, [handleSkipToExplore]);
+
+  const handleZoomOut = useCallback(() => {
+    if (modeRef.current !== 'EXPLORE') {
+      handleSkipToExplore();
+    }
+    // Zoom out: pulls camera to ~1.35x of current distance (1.3-1.4x spec) with smooth 550ms transition
+    rigApiRef.current?.zoomExploreByFactor(-0.35, 0.55);
+  }, [handleSkipToExplore]);
+
   const handlePrevStop = useCallback(() => {
     const prevIdx = Math.max(0, activeStopIndexRef.current - 1);
     flyToStop(prevIdx, false, false);
@@ -1872,16 +1888,16 @@ export function App() {
         return;
       }
 
-      // EXPLORE mode keyboard shortcuts (+ / - zoom by 12%, 0 resets view in 1.0 s, arrows orbit slowly)
+      // EXPLORE mode keyboard shortcuts (+ / - smooth 550ms zoom, 0 resets view in 1.0 s, arrows orbit slowly)
       if (modeRef.current === 'EXPLORE' && !isFlyingRef.current) {
         if ((e.key === '+' || e.key === '=') && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
-          rigApiRef.current?.zoomExploreByFactor(0.12);
+          handleZoomIn();
           return;
         }
         if ((e.key === '-' || e.key === '_') && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
-          rigApiRef.current?.zoomExploreByFactor(-0.12);
+          handleZoomOut();
           return;
         }
         if (e.key === '0' && !e.ctrlKey && !e.metaKey) {
@@ -2022,6 +2038,10 @@ export function App() {
       skipToExplore: handleSkipToExplore,
       backToTour: handleBackToTour,
       resetExploreView: handleResetExploreView,
+      zoomIn: handleZoomIn,
+      zoomOut: handleZoomOut,
+      zoomExploreByFactor: (factorDelta: number, durationSec?: number) =>
+        rigApiRef.current?.zoomExploreByFactor(factorDelta, durationSec),
       getRenderDiagnostics: () =>
         (window as unknown as Record<string, unknown>).__PORTFOLIO_RENDER_DIAG__ ??
         renderDiagSnapshot,
@@ -2206,6 +2226,8 @@ export function App() {
             onDismissShelfHintChip={dismissShelfHintChip}
             onDismissExploreHintChip={dismissExploreHintChip}
             onResetExploreView={handleResetExploreView}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
             onToggleMinimize={() => setHudMinimized((prev) => !prev)}
             onToggleSoundMuted={handleToggleSoundMuted}
             onPlayGuitarFromUI={handlePlayGuitarFromUI}
